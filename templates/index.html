@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Detection System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .risk-low { color: #28a745; }
+        .risk-medium { color: #ffc107; }
+        .risk-high { color: #fd7e14; }
+        .risk-critical { color: #dc3545; }
+        
+        .score-card {
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            transition: transform 0.2s;
+        }
+        
+        .score-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .progress-bar {
+            transition: width 0.6s ease;
+        }
+        
+        .ai-analysis {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+                    <div class="container">
+                        <a class="navbar-brand" href="#">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            Fraud Detection System
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        
+        <div class="container mt-4">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="alert alert-info mb-4" style="border-radius: 15px;">
+                        <h4 class="alert-heading"><i class="fas fa-heart me-2"></i>Kind Note!</h4>
+                        <p class="mb-0">
+                            This project runs on free API credits <br>
+                            Please enjoy responsibly so others can test too!
+                        </p>
+                        <hr>
+                        <small class="text-muted">
+                            <i class="fas fa-shield-alt me-1"></i>
+                            Built with care by Ayush
+                        </small>
+                    </div>
+                    <!-- Search Card -->
+                    <div class="card shadow">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">
+                                <i class="fas fa-search me-2"></i>
+                                Website Fraud Analysis
+                            </h4>
+                        </div>
+                        <div class="card-body">
+                            <!-- Error Alert -->
+                            <div class="alert alert-danger d-none" id="errorAlert">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <span id="errorMessage"></span>
+                            </div>
+                            
+                            <form id="analyzeForm">
+                                <div class="mb-3">
+                                    <label for="url" class="form-label">Enter Website URL:</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-link"></i>
+                                        </span>
+                                        <input type="url" class="form-control" id="url" name="url" 
+                                               placeholder="https://example.com" required>
+                                        <button class="btn btn-primary" type="submit" id="analyzeBtn">
+                                            <span id="btnText">
+                                                <i class="fas fa-search me-2"></i>Analyze
+                                            </span>
+                                            <span id="btnLoading" class="d-none">
+                                                <div class="loading-spinner me-2"></div>Analyzing...
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Results Section (initially hidden) -->
+                    <div id="resultsSection" class="mt-4 d-none">
+                        <!-- Overall Score Card -->
+                        <div class="card shadow-lg mb-4">
+                            <div class="card-header ai-analysis text-center">
+                                <h3 class="mb-0">
+                                    <i class="fas fa-brain me-2"></i>
+                                    Overall Fraud Risk Score
+                                </h3>
+                            </div>
+                            <div class="card-body text-center">
+                                <div class="display-1 mb-3" id="overallScore">0</div>
+                                <div class="h4 mb-3" id="riskLevel">Analyzing...</div>
+                                <div class="progress mb-3" style="height: 20px;">
+                                    <div class="progress-bar" id="overallProgressBar" style="width: 0%"></div>
+                                </div>
+                                <p class="text-muted" id="scoreDescription">Comprehensive analysis of website legitimacy factors.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Detailed Analysis Cards -->
+                        <div class="row">
+                            <!-- SSL Certificate Analysis -->
+                            <div class="col-lg-6 mb-4">
+                                <div class="card score-card h-100">
+                                    <div class="card-header bg-info text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-lock me-2"></i>
+                                            SSL Certificate Analysis
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span class="h5 mb-0" id="sslScore">0%</span>
+                                            <span class="badge" id="sslStatus">Analyzing...</span>
+                                        </div>
+                                        <div class="progress mb-3" style="height: 6px;">
+                                            <div class="progress-bar bg-info" id="sslProgressBar" style="width: 0%"></div>
+                                        </div>
+                                        <ul class="list-unstyled small" id="sslDetails">
+                                            <li><i class="fas fa-spinner fa-spin text-primary me-1"></i> Checking SSL certificate...</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Domain Analysis -->
+                            <div class="col-lg-6 mb-4">
+                                <div class="card score-card h-100">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-globe me-2"></i>
+                                            Domain Metadata Analysis
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span class="h5 mb-0" id="domainScore">0%</span>
+                                            <span class="badge" id="domainAge">Analyzing...</span>
+                                        </div>
+                                        <div class="progress mb-3" style="height: 6px;">
+                                            <div class="progress-bar bg-success" id="domainProgressBar" style="width: 0%"></div>
+                                        </div>
+                                        <ul class="list-unstyled small" id="domainDetails">
+                                            <li><i class="fas fa-spinner fa-spin text-primary me-1"></i> Checking domain information...</li>
+                                        </ul>
+                                        <div class="mt-2" id="registrarInfo">
+                                            <small class="text-muted">
+                                                <strong>Registrar:</strong> <span id="registrarName">Checking...</span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div> 
+                            </div>
+
+                            <!-- Contact Verification -->
+                            <div class="col-lg-6 mb-4">
+                                <div class="card score-card h-100">
+                                    <div class="card-header bg-warning text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-phone-alt me-2"></i>
+                                            Contact Verification
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span class="h5 mb-0" id="contactScore">0%</span>
+                                            <span class="badge" id="contactStatus">Analyzing...</span>
+                                        </div>
+                                        <div class="progress mb-3" style="height: 6px;">
+                                            <div class="progress-bar bg-warning" id="contactProgressBar" style="width: 0%"></div>
+                                        </div>
+                                        <div id="contactMatches" class="d-none">
+                                            <div class="alert alert-danger small">
+                                                <strong>Matched Contacts:</strong>
+                                                <ul class="mb-0" id="matchList"></ul>
+                                            </div>
+                                        </div>
+                                        <ul class="list-unstyled small" id="contactDetails">
+                                            <li><i class="fas fa-spinner fa-spin text-primary me-1"></i> Verifying contact information...</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Content Analysis -->
+                            <div class="col-lg-6 mb-4">
+                                <div class="card score-card h-100">
+                                    <div class="card-header bg-secondary text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-file-text me-2"></i>
+                                            Content Analysis
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span class="h5 mb-0" id="contentScore">0%</span>
+                                            <span class="badge" id="contentStatus">Analyzing...</span>
+                                        </div>
+                                        <div class="progress mb-3" style="height: 6px;">
+                                            <div class="progress-bar bg-secondary" id="contentProgressBar" style="width: 0%"></div>
+                                        </div>
+                                        <ul class="list-unstyled small" id="contentDetails">
+                                            <li><i class="fas fa-spinner fa-spin text-primary me-1"></i> Analyzing content patterns...</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Analysis Details -->
+                        <div class="card shadow mt-4">
+                            <div class="card-header bg-dark text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-chart-bar me-2"></i>
+                                    Detailed Analysis Report
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="text-primary">Risk Factors Detected:</h6>
+                                        <ul id="riskFactors" class="list-unstyled">
+                                            <li><i class="fas fa-spinner fa-spin text-primary me-1"></i> Analyzing...</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="text-success">Positive Indicators:</h6>
+                                        <ul id="positiveFactors" class="list-unstyled">
+                                            <li><i class="fas fa-spinner fa-spin text-primary me-1"></i> Analyzing...</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recommendations -->
+                        <div class="card shadow mt-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-lightbulb me-2"></i>
+                                    Security Recommendations
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="recommendations">
+                                    <p><i class="fas fa-spinner fa-spin text-primary me-2"></i> Generating recommendations...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="text-muted mb-0">
+                <i class="fas fa-shield-alt me-2"></i>
+                Fraud Detection System - Stay Safe Online
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('analyzeForm');
+            const resultsSection = document.getElementById('resultsSection');
+            const errorAlert = document.getElementById('errorAlert');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const btnText = document.getElementById('btnText');
+            const btnLoading = document.getElementById('btnLoading');
+
+            form.addEventListener('submit', function(e) {
+                // e.preventDefault();
+                // const url = document.getElementById('url').value;
+                
+                // if (!url) {
+                //     showError('Please enter a valid URL');
+                //     return;
+                // }
+
+                // // Show loading state
+                // showLoadingState();
+                
+                // // Hide error and show results
+                // errorAlert.classList.add('d-none');
+                // resultsSection.classList.remove('d-none');
+                
+                // // Make API call to backend
+                // fetch('/api/analyze', {
+                //     method: 'POST',
+                //     headers: {
+                //         'Content-Type': 'application/json',
+                //     },
+                //     body: JSON.stringify({ url: url })
+                // })
+                // .then(response => {
+                //     if (!response.ok) {
+                //         throw new Error(`HTTP error! status: ${response.status}`);
+                //     }
+                //     return response.json();
+                // })
+                // .then(data => {
+                //     console.log('Analysis result:', data);
+                //     processAnalysisResult(data);
+                // })
+                // .catch(error => {
+                //     console.error('Error:', error);
+                //     showError('Analysis failed: ' + error.message);
+                //     resultsSection.classList.add('d-none');
+                // })
+                // .finally(() => {
+                //     hideLoadingState();
+                // });
+                e.preventDefault();
+                const url = document.getElementById('url').value;
+                
+                if (!url) {
+                    showError('Please enter a valid URL');
+                    return;
+                }
+
+                showLoadingState();
+                errorAlert.classList.add('d-none');
+                resultsSection.classList.remove('d-none');
+                
+                fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ url: url })
+                })
+                .then(response => response.json())
+                .then(data => processAnalysisResult(data))
+                .catch(error => {
+                    console.error('Error:', error);
+                    showError('Analysis failed: ' + error.message);
+                    resultsSection.classList.add('d-none');
+                })
+                .finally(() => {
+                    hideLoadingState();
+                });
+            });
+
+            function showLoadingState() {
+                analyzeBtn.disabled = true;
+                btnText.classList.add('d-none');
+                btnLoading.classList.remove('d-none');
+            }
+
+            function hideLoadingState() {
+                analyzeBtn.disabled = false;
+                btnText.classList.remove('d-none');
+                btnLoading.classList.add('d-none');
+            }
+
+            function showError(message) {
+                document.getElementById('errorMessage').textContent = message;
+                errorAlert.classList.remove('d-none');
+            }
+
+            function processAnalysisResult(data) {
+                // Handle critical risk (matched contacts)
+                if (data.immediate_flag) {
+                    updateOverallScore(0, 'Critical Risk', 'This website has known fraudulent contacts!');
+                    document.getElementById('contactMatches').classList.remove('d-none');
+                    const matchList = document.getElementById('matchList');
+                    matchList.innerHTML = data.matched_contacts.map(contact => `<li>${contact}</li>`).join('');
+                    return;
+                }
+
+                // Process normal analysis results
+                const scores = data.scores;
+                
+                // Update SSL section
+                updateSSLResults(
+                    scores.ssl.score, 
+                    scores.ssl.status, 
+                    scores.ssl.details
+                );
+                
+                // Update Domain section
+                updateDomainResults(
+                    scores.domain.score,
+                    `${scores.domain.metadata.age_years || 0} years old`,
+                    scores.domain.details,
+                    scores.domain.metadata.registrar || 'Unknown'
+                );
+                
+                // Update Contact section
+                updateContactResults(
+                    scores.contact_check.score,
+                    scores.contact_check.match_count > 0 ? 
+                        `${scores.contact_check.match_count} Suspicious Contacts` : 
+                        '0 Suspicious Contacts',
+                    scores.contact_check.match_count > 0 ?
+                        [`Found ${scores.contact_check.match_count} matches in fraud database`] :
+                        ['No matches in fraud database', 'Contact information appears clean']
+                );
+                
+                // Update Content section
+                updateContentResults(
+                    scores.content.score,
+                    scores.content.issues_found > 0 ? 'Issues Found' : 'Clean',
+                    scores.content.details
+                );
+                
+                // Update overall score
+                updateOverallScore(
+                    Math.round(scores.overall.score),
+                    scores.overall.risk_level,
+                    scores.overall.verdict
+                );
+                
+                // Update detailed analysis
+                updateDetailedAnalysis(data);
+            }
+
+            function updateSSLResults(score, status, details) {
+                document.getElementById('sslScore').textContent = score + '%';
+                document.getElementById('sslStatus').textContent = status;
+                document.getElementById('sslStatus').className = `badge bg-${score >= 70 ? 'success' : score >= 40 ? 'warning' : 'danger'}`;
+                document.getElementById('sslProgressBar').style.width = score + '%';
+                
+                const detailsList = document.getElementById('sslDetails');
+                detailsList.innerHTML = details.map(detail => 
+                    `<li><i class="fas fa-${score >= 70 ? 'check-circle text-success' : 'exclamation-triangle text-warning'} me-1"></i> ${detail}</li>`
+                ).join('');
+            }
+
+            function updateDomainResults(score, age, details, registrar) {
+                document.getElementById('domainScore').textContent = score + '%';
+                document.getElementById('domainAge').textContent = age;
+                document.getElementById('domainAge').className = `badge bg-${score >= 70 ? 'success' : score >= 40 ? 'warning' : 'danger'}`;
+                document.getElementById('domainProgressBar').style.width = score + '%';
+                document.getElementById('registrarName').textContent = registrar;
+                
+                const detailsList = document.getElementById('domainDetails');
+                detailsList.innerHTML = details.map(detail => 
+                    `<li><i class="fas fa-info-circle text-primary me-1"></i> ${detail}</li>`
+                ).join('');
+            }
+
+            function updateContactResults(score, status, details) {
+                document.getElementById('contactScore').textContent = score + '%';
+                document.getElementById('contactStatus').textContent = status;
+                document.getElementById('contactStatus').className = `badge bg-${score >= 70 ? 'success' : 'danger'}`;
+                document.getElementById('contactProgressBar').style.width = score + '%';
+                
+                const detailsList = document.getElementById('contactDetails');
+                detailsList.innerHTML = details.map(detail => 
+                    `<li><i class="fas fa-${score >= 70 ? 'check-circle text-success' : 'exclamation-triangle text-warning'} me-1"></i> ${detail}</li>`
+                ).join('');
+            }
+
+            function updateContentResults(score, status, details) {
+                document.getElementById('contentScore').textContent = score + '%';
+                document.getElementById('contentStatus').textContent = status;
+                document.getElementById('contentStatus').className = `badge bg-${score >= 70 ? 'success' : score >= 40 ? 'warning' : 'danger'}`;
+                document.getElementById('contentProgressBar').style.width = score + '%';
+                
+                const detailsList = document.getElementById('contentDetails');
+                detailsList.innerHTML = details.map(detail => 
+                    `<li><i class="fas fa-${score >= 70 ? 'check-circle text-success' : 'exclamation-triangle text-warning'} me-1"></i> ${detail}</li>`
+                ).join('');
+            }
+
+            function updateOverallScore(score, riskLevel, description) {
+                document.getElementById('overallScore').textContent = score;
+                document.getElementById('overallProgressBar').style.width = score + '%';
+                
+                let progressClass;
+                if (score >= 80) {
+                    progressClass = 'bg-success';
+                } else if (score >= 60) {
+                    progressClass = 'bg-warning';
+                } else if (score >= 40) {
+                    progressClass = 'bg-danger';
+                } else {
+                    progressClass = 'bg-danger';
+                }
+
+                document.getElementById('riskLevel').textContent = riskLevel;
+                document.getElementById('riskLevel').className = `h4 mb-3 ${progressClass.replace('bg-', 'text-')}`;
+                document.getElementById('overallProgressBar').className = `progress-bar ${progressClass}`;
+                document.getElementById('scoreDescription').textContent = description;
+            }
+
+            function updateDetailedAnalysis(data) {
+                const scores = data.scores;
+                const riskFactors = [];
+                const positiveFactors = [];
+
+                // Analyze each component for risk factors and positive indicators
+                if (scores.ssl.score < 70) {
+                    riskFactors.push('SSL certificate issues detected');
+                } else {
+                    positiveFactors.push('Valid and secure SSL certificate');
+                }
+
+                if (scores.domain.score < 50) {
+                    riskFactors.push('Domain appears suspicious or very new');
+                } else {
+                    positiveFactors.push('Domain has good registration history');
+                }
+
+                if (scores.content.issues_found > 0) {
+                    riskFactors.push(`${scores.content.issues_found} suspicious content patterns found`);
+                } else {
+                    positiveFactors.push('No suspicious content patterns detected');
+                }
+
+                if (scores.contact_check.match_count > 0) {
+                    riskFactors.push(`Contact information matches ${scores.contact_check.match_count} known fraud cases`);
+                } else {
+                    positiveFactors.push('Contact information appears clean');
+                }
+
+                // Update the DOM
+                document.getElementById('riskFactors').innerHTML = riskFactors.length > 0 ?
+                    riskFactors.map(factor => `<li><i class="fas fa-exclamation-triangle text-warning me-1"></i> ${factor}</li>`).join('') :
+                    '<li><i class="fas fa-check-circle text-success me-1"></i> No significant risk factors detected</li>';
+
+                document.getElementById('positiveFactors').innerHTML = positiveFactors.length > 0 ?
+                    positiveFactors.map(factor => `<li><i class="fas fa-check-circle text-success me-1"></i> ${factor}</li>`).join('') :
+                    '<li><i class="fas fa-info-circle text-info me-1"></i> Limited positive indicators found</li>';
+
+                // Generate recommendations
+                generateRecommendations(scores.overall.score, riskFactors.length);
+            }
+
+            function generateRecommendations(overallScore, riskCount) {
+                let recommendations = '';
+                
+                if (overallScore < 40) {
+                    recommendations = `
+                        <div class="alert alert-danger">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>High Risk - Avoid This Website:</h6>
+                            <ul class="mb-0">
+                                <li>Do not provide any personal or financial information</li>
+                                <li>Do not make any payments or transactions</li>
+                                <li>Report this website to appropriate authorities</li>
+                                <li>Warn others about potential fraud</li>
+                            </ul>
+                        </div>
+                    `;
+                } else if (overallScore < 60) {
+                    recommendations = `
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-circle me-2"></i>Medium Risk - Exercise Extreme Caution:</h6>
+                            <ul class="mb-0">
+                                <li>Thoroughly verify the website's legitimacy before proceeding</li>
+                                <li>Look for additional reviews and testimonials</li>
+                                <li>Use secure payment methods only</li>
+                                <li>Avoid sharing sensitive personal information</li>
+                            </ul>
+                        </div>
+                    `;
+                } else {
+                    recommendations = `
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-shield-alt me-2"></i>General Safety Tips:</h6>
+                            <ul class="mb-0">
+                                <li>Always verify contact information independently</li>
+                                <li>Check for customer reviews and testimonials</li>
+                                <li>Use secure payment methods (PayPal, credit cards)</li>
+                                <li>Be cautious with personal information sharing</li>
+                                <li>Trust your instincts - if something feels wrong, it probably is</li>
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                document.getElementById('recommendations').innerHTML = recommendations;
+            }
+
+            // Add hover effects for score cards
+            const scoreCards = document.querySelectorAll('.score-card');
+            scoreCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.classList.add('shadow-lg');
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.classList.remove('shadow-lg');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
